@@ -1,6 +1,9 @@
 import { BrandAvatar } from '../common/BrandAvatar';
 import { SearchModeNav } from '../features/sidebar/SearchModeNav';
 import { HybridWeightPanel } from '../features/sidebar/HybridWeightPanel';
+import { RerankSettingsPanel } from '../features/sidebar/RerankSettingsPanel';
+import { DeduplicationPanel } from '../features/sidebar/DeduplicationPanel';
+import { SummarizationPanel } from '../features/sidebar/SummarizationPanel';
 import { ResultsLimitSelect } from '../features/sidebar/ResultsLimitSelect';
 import { ClearChatButton } from '../features/sidebar/ClearChatButton';
 import { UploadResumeButton } from '../features/sidebar/UploadResumeButton';
@@ -24,6 +27,12 @@ export function Sidebar({ className = '' }: SidebarProps) {
       <SearchModeNav activeMode={searchType} onChange={setSearchType} />
 
       {searchType === 'hybrid' && <HybridWeightPanel />}
+
+      <RerankSettingsPanel />
+
+      <DeduplicationPanel />
+
+      <SummarizationPanel />
 
       <ResultsLimitSelect />
 

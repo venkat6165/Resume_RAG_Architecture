@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import type { SearchResult, SearchMode } from '@/types/search.types';
 import { RankBadge } from './RankBadge';
 import { ScorePill } from './ScorePill';
 import { useUIStore } from '@/lib/stores/ui.store';
+import { useSearchStore } from '@/lib/stores/search.store';
+import { searchApi } from '@/lib/api/search.api';
+import toast from 'react-hot-toast';
 
 interface ResultCardProps {
   result: SearchResult;
@@ -10,11 +14,32 @@ interface ResultCardProps {
 
 export function ResultCard({ result, searchType }: ResultCardProps) {
   const { openCandidateModal } = useUIStore();
+  const { lastQuery, summaryStyle, updateCandidateSummary } = useSearchStore();
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const rank = result.rank || 1;
 
   function handleClick() {
     if (result.candidateId) {
       openCandidateModal(result.candidateId);
+    }
+  }
+
+  async function handleSummarize(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (isSummarizing) return;
+    setIsSummarizing(true);
+    try {
+      const summaryText = await searchApi.summarizeCandidate(
+        lastQuery || result.snippet || 'Candidate Evaluation',
+        result,
+        summaryStyle
+      );
+      updateCandidateSummary(result.candidateId || result.resumeId || '', summaryText);
+      toast.success('⚡ AI Candidate Fit Summary generated!');
+    } catch (err) {
+      toast.error('Summarization request failed.');
+    } finally {
+      setIsSummarizing(false);
     }
   }
 
@@ -39,7 +64,7 @@ export function ResultCard({ result, searchType }: ResultCardProps) {
           </div>
         </div>
 
-        <ScorePill score={result.score} searchType={searchType} sources={result.sources} />
+        <ScorePill score={result.score} searchType={searchType} sources={result.sources} isDeduplicated={result.isDeduplicated} />
       </div>
 
       {/* Experience & Contact Tags */}
@@ -61,18 +86,44 @@ export function ResultCard({ result, searchType }: ResultCardProps) {
         )}
       </div>
 
-      {/* Grounded Summary or Reason */}
+      {/* Grounded AI Fit Summary or On-Demand Summarize Button */}
       {result.summary ? (
-        <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-indigo-200 leading-relaxed">
-          <span className="font-semibold text-indigo-300">Fit Summary: </span>
-          {result.summary}
+        <div className="p-3 rounded-xl bg-primary/10 border border-primary/25 text-xs text-indigo-200 leading-relaxed shadow-sm">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-semibold text-indigo-300 flex items-center gap-1 text-[11px] uppercase tracking-wider">
+              ⚡ AI Candidate Fit Summary
+            </span>
+            <button
+              onClick={handleSummarize}
+              className="text-[10px] text-indigo-400 hover:text-indigo-200 underline font-medium"
+              title="Regenerate fit summary"
+            >
+              {isSummarizing ? 'Generating...' : 'Re-summarize'}
+            </button>
+          </div>
+          <p className="text-indigo-100">{result.summary}</p>
         </div>
-      ) : result.reason ? (
-        <div className="p-2.5 rounded-xl bg-white/5 text-xs text-text-muted leading-relaxed">
-          <span className="font-medium text-text-primary">Reasoning: </span>
-          {result.reason}
+      ) : (
+        <div className="flex items-center">
+          <button
+            onClick={handleSummarize}
+            disabled={isSummarizing}
+            className="px-2.5 py-1 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-indigo-300 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <span>⚡</span>
+            <span>{isSummarizing ? 'Generating AI Summary...' : 'Summarize Candidate Fit'}</span>
+          </button>
         </div>
-      ) : null}
+      )}
+
+      {result.reason && (
+        <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200 leading-relaxed">
+          <div className="flex items-center gap-1 font-semibold text-indigo-300 mb-0.5">
+            <span>🤖 LLM Re-rank Reasoning</span>
+          </div>
+          <p className="text-text-muted">{result.reason}</p>
+        </div>
+      )}
 
       {/* Content Snippet */}
       {result.snippet && (

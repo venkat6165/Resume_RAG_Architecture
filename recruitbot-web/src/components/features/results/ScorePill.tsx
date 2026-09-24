@@ -4,9 +4,10 @@ interface ScorePillProps {
   score: number;
   searchType: SearchMode;
   sources?: ('bm25' | 'vector')[];
+  isDeduplicated?: boolean;
 }
 
-export function ScorePill({ score, searchType, sources }: ScorePillProps) {
+export function ScorePill({ score, searchType, sources, isDeduplicated }: ScorePillProps) {
   const displayScore = score > 1 ? score.toFixed(1) : Math.round(score * 100) + '%';
 
   const pillClass =
@@ -24,7 +25,11 @@ export function ScorePill({ score, searchType, sources }: ScorePillProps) {
         {displayScore} <span className="text-[10px] opacity-80 font-sans uppercase">{label}</span>
       </div>
 
-      {sources && sources.length > 0 && (
+      {(sources && sources.length > 1) || isDeduplicated ? (
+        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase flex items-center gap-1">
+          ✨ Merged (BM25 + Vector)
+        </span>
+      ) : sources && sources.length === 1 ? (
         <div className="flex items-center gap-1">
           {sources.includes('bm25') && (
             <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30 uppercase">
@@ -37,7 +42,7 @@ export function ScorePill({ score, searchType, sources }: ScorePillProps) {
             </span>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

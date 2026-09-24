@@ -5,7 +5,7 @@ import { ResultsList } from '@/components/features/results/ResultsList';
 import toast from 'react-hot-toast';
 
 export function useSearch() {
-  const { searchType, bm25Weight, vectorWeight, topK, setSearching, setResults } = useSearchStore();
+  const { searchType, bm25Weight, vectorWeight, topK, enableRerank, rerankTopN, enableDeduplication, enableSummarize, summaryStyle, setSearching, setResults } = useSearchStore();
   const { addUserMessage, addBotMessage } = useChatStore();
 
   async function submitQuery(queryText: string) {
@@ -22,9 +22,16 @@ export function useSearch() {
         topK,
         bm25Weight: bm25Weight / 100,
         vectorWeight: vectorWeight / 100,
+        options: {
+          enableRerank,
+          rerankTopN,
+          deduplicate: enableDeduplication,
+          summarize: enableSummarize,
+          summaryStyle,
+        },
       });
 
-      setResults(data.results, trimmed, data.timings);
+      setResults(data.results, trimmed, data.timings, data.deduplicatedCount);
 
       addBotMessage(
         <ResultsList

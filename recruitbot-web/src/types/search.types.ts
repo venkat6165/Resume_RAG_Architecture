@@ -10,7 +10,9 @@ export interface SearchFilters {
 export interface SearchOptions {
   bm25TopK?: number;
   vectorTopK?: number;
+  enableRerank?: boolean;
   rerankTopN?: number;
+  deduplicate?: boolean;
   finalTopK?: number;
   summarize?: boolean;
   summaryStyle?: 'short' | 'detailed';
@@ -47,6 +49,7 @@ export interface SearchResult {
   sources?: ('bm25' | 'vector')[];
   reason?: string;
   rank?: number;
+  isDeduplicated?: boolean;
 }
 
 export interface SearchResponse {
@@ -55,6 +58,7 @@ export interface SearchResponse {
   mode?: string;
   topK?: number;
   resultCount?: number;
+  deduplicatedCount?: number;
   duration?: number;
   degraded?: boolean;
   warnings?: string[];
